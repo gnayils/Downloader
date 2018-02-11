@@ -27,9 +27,9 @@ public abstract class BaseChannel<T extends SelectableChannel> {
         this.selector = Selector.open();
     }
 
-    public abstract ReadResult read(ByteBuffer byteBuffer) throws IOException;
+    public abstract ByteBufferReadResult read(ByteBuffer byteBuffer) throws IOException;
 
-    public abstract ReadResult read(ByteBuffer bytebuffer, int timeout) throws IOException;
+    public abstract ByteBufferReadResult read(ByteBuffer bytebuffer, int timeout) throws IOException;
 
     public abstract int write(ByteBuffer byteBuffer) throws IOException;
 
@@ -76,12 +76,12 @@ public abstract class BaseChannel<T extends SelectableChannel> {
         }
     }
 
-    public static class ReadResult {
+    public static class ByteBufferReadResult {
 
         public int numberOfBytes;
         public SocketAddress sourceAddress;
 
-        public ReadResult(int numberOfBytes, SocketAddress sourceAddress) {
+        public ByteBufferReadResult(int numberOfBytes, SocketAddress sourceAddress) {
             this.numberOfBytes = numberOfBytes;
             this.sourceAddress = sourceAddress;
         }
