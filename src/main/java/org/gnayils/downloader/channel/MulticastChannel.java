@@ -42,18 +42,18 @@ public class MulticastChannel extends BaseChannel<DatagramChannel> {
         }
     }
 
-    public ReadResult read(ByteBuffer byteBuffer) throws IOException {
+    public ByteBufferReadResult read(ByteBuffer byteBuffer) throws IOException {
         return read(byteBuffer, 0);
     }
 
-    public ReadResult read(ByteBuffer byteBuffer, int timeout) throws IOException {
+    public ByteBufferReadResult read(ByteBuffer byteBuffer, int timeout) throws IOException {
         SelectionKey key = selectKey(SelectionKey.OP_READ, timeout);
         try {
             if(key != null) {
                 int bufferPosition = byteBuffer.position();
                 SocketAddress sourceAddress = channel.getClass().cast(key.channel()).receive(byteBuffer);
                 int readNumberOfBytes = byteBuffer.position() - bufferPosition;
-                return new ReadResult(readNumberOfBytes, sourceAddress);
+                return new ByteBufferReadResult(readNumberOfBytes, sourceAddress);
             }
         } catch (IOException e) {
             if(key != null) {
@@ -113,13 +113,13 @@ public class MulticastChannel extends BaseChannel<DatagramChannel> {
                         isLastJoinedGroup = isJoinedGroup;
                     }
                     byteBuffer.clear();
-                    ReadResult readResult = multicaster.read(byteBuffer, 500);
+                    ByteBufferReadResult byteBufferReadResult = multicaster.read(byteBuffer, 500);
                     byteBuffer.flip();
                     System.out.print("recv multicast: " + new String(byteBuffer.array(), 0, byteBuffer.remaining()));
-                    if(readResult == null) {
+                    if(byteBufferReadResult == null) {
                         System.out.println();
                     } else {
-                        System.out.println(", " + readResult.numberOfBytes + ", " + readResult.sourceAddress);
+                        System.out.println(", " + byteBufferReadResult.numberOfBytes + ", " + byteBufferReadResult.sourceAddress);
                     }
 
                 } catch (IOException e) {

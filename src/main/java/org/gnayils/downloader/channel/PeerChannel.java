@@ -13,14 +13,14 @@ public class PeerChannel extends BaseChannel<SocketChannel> {
         channel.register(selector, SelectionKey.OP_READ);
     }
 
-    public ReadResult read(ByteBuffer byteBuffer) throws IOException {
+    public ByteBufferReadResult read(ByteBuffer byteBuffer) throws IOException {
         return read(byteBuffer, 0);
     }
 
-    public ReadResult read(ByteBuffer byteBuffer, int timeout) throws IOException {
+    public ByteBufferReadResult read(ByteBuffer byteBuffer, int timeout) throws IOException {
         SelectionKey key = selectKey(SelectionKey.OP_READ, timeout);
         try {
-            return key == null ? null : new ReadResult(channel.getClass().cast(key.channel()).read(byteBuffer), channel.getRemoteAddress());
+            return key == null ? null : new ByteBufferReadResult(channel.getClass().cast(key.channel()).read(byteBuffer), channel.getRemoteAddress());
         } catch (IOException e) {
             if(key != null) {
                 key.cancel();

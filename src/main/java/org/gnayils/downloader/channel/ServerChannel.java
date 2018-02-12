@@ -35,12 +35,12 @@ public class ServerChannel extends BaseChannel<ServerSocketChannel> {
     }
 
     @Override
-    public ReadResult read(ByteBuffer byteBuffer) throws IOException {
+    public ByteBufferReadResult read(ByteBuffer byteBuffer) throws IOException {
         throw new UnsupportedOperationException("unsupported operation");
     }
 
     @Override
-    public ReadResult read(ByteBuffer bytebuffer, int timeout) throws IOException {
+    public ByteBufferReadResult read(ByteBuffer bytebuffer, int timeout) throws IOException {
         throw new UnsupportedOperationException("unsupported operation");
     }
 
