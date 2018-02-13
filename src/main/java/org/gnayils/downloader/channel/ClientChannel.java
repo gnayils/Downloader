@@ -51,32 +51,4 @@ public class ClientChannel extends BaseChannel<SocketChannel> {
     public int write(ByteBuffer byteBuffer) throws IOException {
         return channel.write(byteBuffer);
     }
-
-    public static void main(String[] args) throws IOException {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(128);
-
-        ClientChannel client = new ClientChannel("192.168.0.106", 13232);
-        ServerChannel server = new ServerChannel("192.168.0.106", 13232);
-
-        server.bind();
-        client.connect();
-
-        PeerChannel peer = server.accept();
-        client.write(ByteBuffer.wrap("hello, server".getBytes()));
-        byteBuffer.clear();
-        ByteBufferReadResult byteBufferReadResult = peer.read(byteBuffer);
-        System.out.println(byteBufferReadResult.numberOfBytes + ", " + byteBufferReadResult.sourceAddress);
-        byteBuffer.flip();
-        System.out.println(new String(byteBuffer.array(), 0, byteBuffer.remaining()));
-
-        peer.write(ByteBuffer.wrap("hello, client".getBytes()));
-        byteBuffer.clear();
-        client.read(byteBuffer);
-        byteBuffer.flip();
-        System.out.printf(new String(byteBuffer.array(), 0, byteBuffer.remaining()));
-
-        peer.close();
-        client.close();
-        server.close();
-    }
 }

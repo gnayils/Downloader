@@ -80,60 +80,12 @@ public class ObjectChannel<T extends BaseChannel> {
 
     public static class ObjectReadResult {
 
-        SocketAddress sourceAddress;
-        Object object;
+        public SocketAddress sourceAddress;
+        public Object object;
 
         public ObjectReadResult(Object object, SocketAddress sourceAddress) {
             this.object = object;
             this.sourceAddress = sourceAddress;
         }
-    }
-
-    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
-        ClientChannel client = new ClientChannel("192.168.0.106", 13232);
-        ServerChannel server = new ServerChannel("192.168.0.106", 13232);
-
-        server.bind();
-        client.connect();
-
-        ObjectChannel<PeerChannel> peerObjectChannel = new ObjectChannel(server.accept());
-
-
-        ObjectChannel<ClientChannel> clientObjectChannel = new ObjectChannel(client);
-        clientObjectChannel.writeObject("client string object");
-
-        String string = (String) peerObjectChannel.readObject().object;
-        System.out.println(string);
-
-        peerObjectChannel.writeObject("server string object");
-        string = (String) clientObjectChannel.readObject().object;
-        System.out.println(string);
-
-        peerObjectChannel.getChannel().close();
-        clientObjectChannel.getChannel().close();
-        server.close();
-
-
-
-        MulticastChannel multicasterA = new MulticastChannel("192.168.0.106", 13232,"230.0.0.1");
-        MulticastChannel multicasterB = new MulticastChannel("192.168.0.106", 13232,"230.0.0.1");
-
-        ObjectChannel<MulticastChannel> multicastObjectChannelA = new ObjectChannel(multicasterA);
-        ObjectChannel<MulticastChannel> multicastObjectChannelB = new ObjectChannel(multicasterB);
-
-        multicastObjectChannelA.getChannel().joinGroup();
-        multicastObjectChannelB.getChannel().joinGroup();
-
-        multicastObjectChannelA.writeObject("multicastObjectChannelA");
-        multicastObjectChannelB.writeObject("multicastObjectChannelB");
-
-        System.out.println(multicastObjectChannelA.readObject().object);
-        System.out.println(multicastObjectChannelB.readObject().object);
-        System.out.println(multicastObjectChannelA.readObject().object);
-        System.out.println(multicastObjectChannelB.readObject().object);
-
-        multicasterA.close();
-        multicasterB.close();
-
     }
 }
