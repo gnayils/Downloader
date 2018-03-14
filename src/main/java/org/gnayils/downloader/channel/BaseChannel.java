@@ -17,7 +17,11 @@ public abstract class BaseChannel<T extends SelectableChannel> {
     protected T channel;
 
     public BaseChannel(String ip, int port) throws IOException {
-        this.ip = InetAddress.getByName(ip);
+        this(InetAddress.getByName(ip), port);
+    }
+
+    public BaseChannel(InetAddress ip, int port) throws IOException {
+        this.ip = ip;
         this.port = port;
         this.selector = Selector.open();
     }
@@ -33,14 +37,18 @@ public abstract class BaseChannel<T extends SelectableChannel> {
 
     public abstract int write(ByteBuffer byteBuffer) throws IOException;
 
+    public T channel() {
+        return channel;
+    }
+
     protected SelectionKey selectKey(int keyOption, int timeout) throws IOException {
         SelectionKey theKey = null;
         do {
-            selector.select(timeout);
-            Set<SelectionKey> keySet = selector.selectedKeys();
-            if(timeout > 0 && keySet.isEmpty()) {
-                return theKey;
+            int selectedCount = selector.select(timeout);
+            if(selectedCount == 0) {
+                return null;
             }
+            Set<SelectionKey> keySet = selector.selectedKeys();
             Iterator<SelectionKey> iterator = keySet.iterator();
             while(iterator.hasNext()) {
                 SelectionKey key = iterator.next();

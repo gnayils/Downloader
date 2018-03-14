@@ -1,6 +1,8 @@
 package org.gnayils.downloader.channel;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -9,6 +11,10 @@ import java.nio.channels.SocketChannel;
 public class ClientChannel extends BaseChannel<SocketChannel> {
 
     public ClientChannel(String ip, int port) throws IOException {
+        this(InetAddress.getByName(ip), port);
+    }
+
+    public ClientChannel(InetAddress ip, int port) throws IOException {
         super(ip, port);
         this.channel = SocketChannel.open();
         this.channel.configureBlocking(false);
@@ -39,7 +45,15 @@ public class ClientChannel extends BaseChannel<SocketChannel> {
     public ByteBufferReadResult read(ByteBuffer byteBuffer, int timeout) throws IOException {
         SelectionKey key = selectKey(SelectionKey.OP_READ, timeout);
         try {
-            return key == null ? null : new ByteBufferReadResult(channel.getClass().cast(key.channel()).read(byteBuffer), channel.getRemoteAddress());
+            if(key == null) {
+                return null;
+            }
+            int numberOfBytes = channel.getClass().cast(key.channel()).read(byteBuffer);
+            if(numberOfBytes == -1) {
+                throw new EOFException("the channel has reached end-of-stream");
+            } else {
+                return new ByteBufferReadResult(numberOfBytes, channel.getRemoteAddress());
+            }
         } catch (IOException e) {
             if(key != null) {
                 key.cancel();

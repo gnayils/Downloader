@@ -9,6 +9,9 @@ import org.gnayils.downloader.channel.BaseChannel.ByteBufferReadResult;
 public class ObjectChannel<T extends BaseChannel> {
 
     private T channel;
+    private ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
+    private ByteBuffer objectBuffer;
+    private ObjectReadResult objectReadResult;
 
     public ObjectChannel(T channel) {
         this.channel = channel;
@@ -19,34 +22,38 @@ public class ObjectChannel<T extends BaseChannel> {
     }
 
     public ObjectReadResult readObject() throws IOException, ClassNotFoundException {
-        ByteBufferReadResult lastByteBufferReadResult = null;
-        ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
+        return readObject(0);
+    }
+
+    public ObjectReadResult readObject(int timeout) throws IOException, ClassNotFoundException {
         while (lengthBuffer.hasRemaining()) {
-            ByteBufferReadResult byteBufferReadResult = channel.read(lengthBuffer);
-            if(byteBufferReadResult != null) {
-                if (lastByteBufferReadResult == null || byteBufferReadResult.sourceAddress.equals(lastByteBufferReadResult.sourceAddress)) {
-                    lastByteBufferReadResult = byteBufferReadResult;
-                    continue;
-                } else {
-                    System.err.println("the received data from different source address");
-                    return null;
-                }
+            channel.read(lengthBuffer, timeout);
+            if(timeout == 0) {
+                continue;
+            } else if(lengthBuffer.hasRemaining()) {
+                return null;
             }
         }
-        lengthBuffer.flip();
-        ByteBuffer objectBuffer = ByteBuffer.allocate(lengthBuffer.getInt());
+        if(objectBuffer == null) {
+            lengthBuffer.flip();
+            objectBuffer = ByteBuffer.allocate(lengthBuffer.getInt());
+            objectReadResult = new ObjectReadResult();
+        }
         while (objectBuffer.hasRemaining()) {
-            ByteBufferReadResult byteBufferReadResult = channel.read(objectBuffer);
+            ByteBufferReadResult byteBufferReadResult = channel.read(objectBuffer, timeout);
             if(byteBufferReadResult != null) {
-                if (byteBufferReadResult.sourceAddress.equals(lastByteBufferReadResult.sourceAddress)) {
-                    continue;
-                } else {
-                    System.err.println("the received data from different source address");
-                    return null;
-                }
+                objectReadResult.sourceAddress = byteBufferReadResult.sourceAddress;
+            }
+            if (timeout == 0) {
+                continue;
+            } else if(objectBuffer.hasRemaining()){
+                return null;
             }
         }
-        return new ObjectReadResult(parseObject(objectBuffer), lastByteBufferReadResult.sourceAddress);
+        objectReadResult.object = parseObject(objectBuffer);
+        objectBuffer = null;
+        lengthBuffer.clear();
+        return objectReadResult;
     }
 
     public void writeObject(Object object) throws IOException {
@@ -82,6 +89,10 @@ public class ObjectChannel<T extends BaseChannel> {
 
         public SocketAddress sourceAddress;
         public Object object;
+
+        public ObjectReadResult() {
+
+        }
 
         public ObjectReadResult(Object object, SocketAddress sourceAddress) {
             this.object = object;
