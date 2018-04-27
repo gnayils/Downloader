@@ -1,6 +1,8 @@
 package org.gnayils.downloader;
 
 import javax.net.ssl.*;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -56,6 +58,21 @@ public class Utilities {
         return null;
     }
 
+    public static Proxy getHttpProxy() {
+        String proxyHost = System.getProperty("http.ProxyHost");
+        String proxyPort = System.getProperty("http.ProxyPort");
+        if(proxyHost != null && proxyPort != null) {
+            int port;
+            try {
+                port = Integer.parseInt(proxyHost);
+                return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, port));
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+;
     public static void main(String[] args) {
         System.out.println(getQualifiedFileName("/tigervnc/stable/download_file?file_path=TigerVNC-1.8.0.dmg"));
     }

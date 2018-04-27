@@ -147,7 +147,12 @@ public class SlaveDownloader implements Runnable {
         try {
             logger.info("start to execute the download task");
             URL downloadUrl = new URL(url);
-            httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection();
+            Proxy proxy = Utilities.getHttpProxy();
+            if(proxy == null) {
+                httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection();
+            } else {
+                httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection(proxy);
+            }
             httpsURLConnection.setRequestMethod("GET");
             httpsURLConnection.setReadTimeout(5000);
             httpsURLConnection.setConnectTimeout(5000);

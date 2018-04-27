@@ -95,7 +95,13 @@ public class MasterDownloader implements Runnable {
     }
 
     private void getContentLength() throws IOException {
-        HttpsURLConnection httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection();
+        Proxy proxy = Utilities.getHttpProxy();
+        HttpsURLConnection httpsURLConnection;
+        if(proxy == null) {
+            httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection();
+        } else {
+            httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection(proxy);
+        }
         httpsURLConnection.setRequestMethod("GET");
         httpsURLConnection.setConnectTimeout(5000);
         httpsURLConnection.setReadTimeout(5000);
