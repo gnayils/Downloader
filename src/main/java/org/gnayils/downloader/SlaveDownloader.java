@@ -192,9 +192,8 @@ public class SlaveDownloader implements Runnable {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-
         Utilities.trustAllCertificates();
-        SlaveDownloader slave = new SlaveDownloader("10.189.132.32", "230.0.0.1", 8000);
+        SlaveDownloader slave = new SlaveDownloader("10.189.147.136", "230.0.0.1", 8000);
         slave.start();
     }
 }

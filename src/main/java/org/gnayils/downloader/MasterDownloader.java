@@ -9,6 +9,8 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
@@ -100,7 +102,8 @@ public class MasterDownloader implements Runnable {
         if (httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
             downloadContentLength = httpsURLConnection.getContentLength();
             httpsURLConnection.disconnect();
-            downloadFile = new File(downloadUrl.getFile().replace(downloadUrl.getPath(), ""));
+            downloadFile = new File(Utilities.getQualifiedFileName(downloadUrl.getFile()));
+            if(!downloadFile.exists()) downloadFile.createNewFile();
             randomAccessFile = new RandomAccessFile(downloadFile, "rwd");
             randomAccessFile.setLength(downloadContentLength);
             logger.log(Level.INFO, "master downloader started, begin to download {0}, the size is {1}", new Object[]{ downloadFile.getName(), downloadContentLength});
@@ -220,7 +223,7 @@ public class MasterDownloader implements Runnable {
 
     public static void main(String[] args) throws IOException {
         Utilities.trustAllCertificates();
-        MasterDownloader master = new MasterDownloader("10.189.132.32", 9000, "230.0.0.1", 8000,"https://bintray.com/tigervnc/stable/download_file?file_path=TigerVNC-1.8.0.dmg", 1);
+        MasterDownloader master = new MasterDownloader("10.189.147.136", 9000, "230.0.0.1", 8000,"https://download-cf.jetbrains.com/cpp/CLion-2018.1.2.zip", 3);
         master.start();
     }
 }

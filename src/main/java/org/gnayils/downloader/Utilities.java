@@ -40,4 +40,23 @@ public class Utilities {
             e.printStackTrace();
         }
     }
+
+    public static String getQualifiedFileName(String text) {
+        final String illegalChars = "\\/:*?\"<>|";
+        int lastIllegalCharIndex = -1;
+        for(int i = text.length() - 1; i >= 0; i--) {
+            if(illegalChars.indexOf(text.charAt(i)) != -1) {
+                lastIllegalCharIndex = i;
+                break;
+            }
+        }
+        if(lastIllegalCharIndex != -1) {
+            return text.substring(lastIllegalCharIndex + 1);
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getQualifiedFileName("/tigervnc/stable/download_file?file_path=TigerVNC-1.8.0.dmg"));
+    }
 }
