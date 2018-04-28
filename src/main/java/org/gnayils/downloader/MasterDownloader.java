@@ -6,16 +6,13 @@ import org.gnayils.downloader.channel.PeerChannel;
 import org.gnayils.downloader.channel.ServerChannel;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 public class MasterDownloader implements Runnable {
 
@@ -227,9 +224,4 @@ public class MasterDownloader implements Runnable {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        Utilities.trustAllCertificates();
-        MasterDownloader master = new MasterDownloader("10.189.147.136", 9000, "230.0.0.1", 8000,"https://download-cf.jetbrains.com/cpp/CLion-2018.1.2.zip", 3);
-        master.start();
-    }
 }

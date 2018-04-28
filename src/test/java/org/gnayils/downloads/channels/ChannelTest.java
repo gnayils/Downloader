@@ -10,7 +10,7 @@ import static junit.framework.TestCase.assertNull;
 
 public class ChannelTest {
 
-    static final String ip = "10.189.132.32";;
+    static final String ip = "10.189.132.32";
     static final int port = 23333;
     static final String groupIp = "230.0.0.1";
 

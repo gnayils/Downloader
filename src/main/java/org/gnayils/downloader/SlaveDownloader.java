@@ -37,7 +37,7 @@ public class SlaveDownloader implements Runnable {
         this.ip = ip;
         this.multicastGroupIp = multicastGroupIp;
         this.multicastPort = multicastPort;
-        this.multicastObjectChannel = new ObjectChannel(new MulticastChannel(ip, multicastPort, multicastGroupIp));
+        this.multicastObjectChannel = new ObjectChannel<>(new MulticastChannel(ip, multicastPort, multicastGroupIp));
     }
 
     public void start() {
@@ -194,11 +194,5 @@ public class SlaveDownloader implements Runnable {
             }
             logger.log(Level.INFO, "download task finished with {0}", errorOccurred ? "error" : "successful");
         }
-    }
-
-    public static void main(String[] args) throws IOException, InterruptedException {
-        Utilities.trustAllCertificates();
-        SlaveDownloader slave = new SlaveDownloader("10.189.147.136", "230.0.0.1", 8000);
-        slave.start();
     }
 }
