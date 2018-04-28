@@ -1,13 +1,13 @@
 package org.gnayils.downloader;
 
+import org.gnayils.Packet;
+import org.gnayils.Utilities;
 import org.gnayils.downloader.channel.ClientChannel;
 import org.gnayils.downloader.channel.MulticastChannel;
 import org.gnayils.downloader.channel.ObjectChannel;
 import org.gnayils.downloader.channel.ObjectChannel.ObjectReadResult;
-import sun.security.validator.ValidatorException;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;

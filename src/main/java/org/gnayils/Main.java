@@ -1,8 +1,10 @@
-package org.gnayils.downloader;
+package org.gnayils;
+
+import org.gnayils.Utilities;
+import org.gnayils.downloader.MasterDownloader;
 
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Main {
 

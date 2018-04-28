@@ -1,5 +1,7 @@
 package org.gnayils.downloader;
 
+import org.gnayils.Packet;
+import org.gnayils.Utilities;
 import org.gnayils.downloader.channel.MulticastChannel;
 import org.gnayils.downloader.channel.ObjectChannel;
 import org.gnayils.downloader.channel.PeerChannel;
@@ -7,11 +9,9 @@ import org.gnayils.downloader.channel.ServerChannel;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.*;
 
 public class MasterDownloader implements Runnable {

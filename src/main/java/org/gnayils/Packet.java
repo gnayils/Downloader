@@ -1,4 +1,4 @@
-package org.gnayils.downloader;
+package org.gnayils;
 
 import java.io.Serializable;
 

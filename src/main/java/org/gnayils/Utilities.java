@@ -1,4 +1,4 @@
-package org.gnayils.downloader;
+package org.gnayils;
 
 import javax.net.ssl.*;
 import java.io.PrintWriter;
