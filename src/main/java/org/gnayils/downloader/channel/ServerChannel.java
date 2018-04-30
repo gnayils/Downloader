@@ -27,9 +27,7 @@ public class ServerChannel extends BaseChannel<ServerSocketChannel> {
         try {
             return key == null ? null : new PeerChannel(channel.getClass().cast(key.channel()).accept());
         } catch (IOException e) {
-            if(key != null) {
-                key.cancel();
-            }
+            key.cancel();
             throw e;
         }
     }

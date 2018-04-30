@@ -31,9 +31,7 @@ public class PeerChannel extends BaseChannel<SocketChannel> {
                 return new ByteBufferReadResult(numberOfBytes, channel.getRemoteAddress());
             }
         } catch (IOException e) {
-            if(key != null) {
-                key.cancel();
-            }
+            key.cancel();
             throw e;
         }
     }

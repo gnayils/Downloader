@@ -6,8 +6,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
 import java.nio.channels.SelectionKey;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MulticastChannel extends BaseChannel<DatagramChannel> {
 
@@ -49,19 +47,17 @@ public class MulticastChannel extends BaseChannel<DatagramChannel> {
     public ByteBufferReadResult read(ByteBuffer byteBuffer, int timeout) throws IOException {
         SelectionKey key = selectKey(SelectionKey.OP_READ, timeout);
         try {
-            if(key != null) {
-                int bufferPosition = byteBuffer.position();
-                SocketAddress sourceAddress = channel.getClass().cast(key.channel()).receive(byteBuffer);
-                int readNumberOfBytes = byteBuffer.position() - bufferPosition;
-                return new ByteBufferReadResult(readNumberOfBytes, sourceAddress);
+            if(key == null) {
+                return null;
             }
+            int bufferPosition = byteBuffer.position();
+            SocketAddress sourceAddress = channel.getClass().cast(key.channel()).receive(byteBuffer);
+            int readNumberOfBytes = byteBuffer.position() - bufferPosition;
+            return new ByteBufferReadResult(readNumberOfBytes, sourceAddress);
         } catch (IOException e) {
-            if(key != null) {
-                key.cancel();
-            }
+            key.cancel();
             throw e;
         }
-        return null;
     }
 
     public int write(ByteBuffer byteBuffer) throws IOException {

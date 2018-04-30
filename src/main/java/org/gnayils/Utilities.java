@@ -40,9 +40,7 @@ public class Utilities {
                     return true;
                 }
             });
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
             e.printStackTrace();
         }
     }
@@ -102,7 +100,8 @@ public class Utilities {
                         record.getThrown().printStackTrace(pw);
                         pw.close();
                         message.append(sw.toString());
-                    } catch (Exception ex) {
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
                 return message.toString();

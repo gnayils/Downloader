@@ -24,7 +24,7 @@ public class MasterDownloader implements Runnable {
     private int multicastPort;
     private int slaveDemandCount;
 
-    private Map<String, ObjectChannel<PeerChannel>> slaveChannelMap = new HashMap();
+    private Map<String, ObjectChannel<PeerChannel>> slaveChannelMap = new HashMap<>();
 
     private Timer timer = new Timer();
 
@@ -32,7 +32,7 @@ public class MasterDownloader implements Runnable {
     private int downloadContentLength;
     private File downloadFile;
     private RandomAccessFile randomAccessFile;
-    private Map<String, int[]> downloadProgressMap = new HashMap();
+    private Map<String, int[]> downloadProgressMap = new HashMap<>();
 
     private ObjectChannel<MulticastChannel> multicastObjectChannel;
     private ServerChannel serverChannel;
@@ -52,7 +52,7 @@ public class MasterDownloader implements Runnable {
         this.multicastPort = multicastPort;
         this.downloadUrl = new URL(downloadUrl);
         this.slaveDemandCount = slaveDemandCount;
-        this.multicastObjectChannel = new ObjectChannel(new MulticastChannel(ip, multicastPort, multicastGroupIp));
+        this.multicastObjectChannel = new ObjectChannel<>(new MulticastChannel(ip, multicastPort, multicastGroupIp));
         this.serverChannel =  new ServerChannel(ip, port);
     }
 
@@ -105,7 +105,7 @@ public class MasterDownloader implements Runnable {
         if (httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
             downloadContentLength = httpsURLConnection.getContentLength();
             httpsURLConnection.disconnect();
-            downloadFile = new File(Utilities.getQualifiedFileName(downloadUrl.getFile()));
+            downloadFile = new File(String.valueOf(Utilities.getQualifiedFileName(downloadUrl.getFile())));
             if(!downloadFile.exists()) downloadFile.createNewFile();
             randomAccessFile = new RandomAccessFile(downloadFile, "rwd");
             randomAccessFile.setLength(downloadContentLength);
@@ -138,7 +138,7 @@ public class MasterDownloader implements Runnable {
             PeerChannel peerChannel = serverChannel.accept();
             if(peerChannel != null) {
                 logger.log(Level.INFO, "hired one slave downloader, come from {0}", peerChannel.channel().getRemoteAddress().toString());
-                slaveChannelMap.put(peerChannel.channel().getRemoteAddress().toString(), new ObjectChannel(peerChannel));
+                slaveChannelMap.put(peerChannel.channel().getRemoteAddress().toString(), new ObjectChannel<>(peerChannel));
             }
             if(!isRunning || Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
@@ -163,7 +163,7 @@ public class MasterDownloader implements Runnable {
                 entry.getValue().writeObject(new Packet(Packet.DOWNLOAD_PARAMS, String.format("%s %d/%d", downloadUrl.toString(), startPosition, endPosition)));downloadProgressMap.put(entry.getKey(), new int[] {startPosition, endPosition});
                 downloadProgressMap.put(entry.getKey(), new int[] {startPosition, endPosition});
                 i++;
-                logger.log(Level.INFO, "dispath download task [{0}~{1}] to the slave downloader {2}", new Object[] {startPosition, endPosition, entry.getKey()});
+                logger.log(Level.INFO, "dispatch download task [{0}~{1}] to the slave downloader {2}", new Object[] {startPosition, endPosition, entry.getKey()});
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "dispatch task to the slave downloader {0} failed", entry.getKey());
                 throw e;
@@ -217,6 +217,7 @@ public class MasterDownloader implements Runnable {
             try {
                 randomAccessFile.close();
             } catch (IOException e) {
+                e.printStackTrace();
             }
             if (!isDownloadSuccessful) {
                 downloadFile.delete();

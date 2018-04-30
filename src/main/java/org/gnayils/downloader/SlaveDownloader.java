@@ -106,7 +106,7 @@ public class SlaveDownloader implements Runnable {
         logger.log(Level.INFO, "accepted the request from master downloader {0}", result.sourceAddress.toString());
         InetAddress masterIp = ((InetSocketAddress) result.sourceAddress).getAddress();
         int masterPort = (Integer) packet.payload;
-        clientObjectChannel = new ObjectChannel(new ClientChannel(masterIp, masterPort));
+        clientObjectChannel = new ObjectChannel<>(new ClientChannel(masterIp, masterPort));
         try {
             clientObjectChannel.getChannel().connect(2000);
             logger.log(Level.INFO, "established the data transfer connection to the master downloader {0}", result.sourceAddress.toString());
@@ -117,7 +117,7 @@ public class SlaveDownloader implements Runnable {
     }
 
     private void waitTaskDispatch() throws IOException, ClassNotFoundException, InterruptedException {
-        ObjectReadResult result = null;
+        ObjectReadResult result;
         Packet packet = null;
         while(isRunning && !Thread.currentThread().isInterrupted()) {
             result = clientObjectChannel.readObject(1000);
@@ -138,7 +138,7 @@ public class SlaveDownloader implements Runnable {
         String[] downloadRange = params[1].split("/");
         startDownloadPosition = Integer.valueOf(downloadRange[0]);
         endDownloadPosition = Integer.valueOf(downloadRange[1]);
-        logger.log(Level.INFO, "received the download task: {0} [{1}~{2}]", new Object[]{url.toString(), startDownloadPosition, endDownloadPosition});
+        logger.log(Level.INFO, "received the download task: {0} [{1}~{2}]", new Object[]{url, startDownloadPosition, endDownloadPosition});
     }
 
     private void executeTask() throws InterruptedException {

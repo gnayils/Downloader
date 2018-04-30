@@ -10,7 +10,7 @@ import static junit.framework.TestCase.assertNull;
 
 public class ChannelTest {
 
-    static final String ip = "10.189.132.32";
+    static final String ip = "127.0.0.1";
     static final int port = 23333;
     static final String groupIp = "230.0.0.1";
 
@@ -91,8 +91,8 @@ public class ChannelTest {
         server.bind();
         client.connect();
 
-        ObjectChannel<ClientChannel> clientObjectChannel = new ObjectChannel(client);
-        ObjectChannel<PeerChannel> peerObjectChannel = new ObjectChannel(server.accept());
+        ObjectChannel<ClientChannel> clientObjectChannel = new ObjectChannel<>(client);
+        ObjectChannel<PeerChannel> peerObjectChannel = new ObjectChannel<>(server.accept());
 
         Object clientObject = "object from client";
         clientObjectChannel.writeObject(clientObject);
@@ -113,8 +113,8 @@ public class ChannelTest {
         MulticastChannel multicasterA = new MulticastChannel(ip, port,groupIp);
         MulticastChannel multicasterB = new MulticastChannel(ip, port,groupIp);
 
-        ObjectChannel<MulticastChannel> multicastObjectChannelA = new ObjectChannel(multicasterA);
-        ObjectChannel<MulticastChannel> multicastObjectChannelB = new ObjectChannel(multicasterB);
+        ObjectChannel<MulticastChannel> multicastObjectChannelA = new ObjectChannel<>(multicasterA);
+        ObjectChannel<MulticastChannel> multicastObjectChannelB = new ObjectChannel<>(multicasterB);
 
         multicastObjectChannelA.getChannel().joinGroup();
         multicastObjectChannelB.getChannel().joinGroup();
