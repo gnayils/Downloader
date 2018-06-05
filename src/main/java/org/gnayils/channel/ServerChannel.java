@@ -1,4 +1,4 @@
-package org.gnayils.downloader.channel;
+package org.gnayils.channel;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

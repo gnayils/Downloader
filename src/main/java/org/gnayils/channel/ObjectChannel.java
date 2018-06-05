@@ -1,10 +1,10 @@
-package org.gnayils.downloader.channel;
+package org.gnayils.channel;
 
 import java.io.*;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
-import org.gnayils.downloader.channel.BaseChannel.ByteBufferReadResult;
+import org.gnayils.channel.BaseChannel.ByteBufferReadResult;
 
 public class ObjectChannel<T extends BaseChannel> {
 

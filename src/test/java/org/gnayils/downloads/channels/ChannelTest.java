@@ -1,5 +1,5 @@
 package org.gnayils.downloads.channels;
-import org.gnayils.downloader.channel.*;
+import org.gnayils.channel.*;
 import org.junit.Test;
 
 import java.io.IOException;

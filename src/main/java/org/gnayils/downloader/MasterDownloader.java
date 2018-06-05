@@ -2,10 +2,10 @@ package org.gnayils.downloader;
 
 import org.gnayils.Packet;
 import org.gnayils.Utilities;
-import org.gnayils.downloader.channel.MulticastChannel;
-import org.gnayils.downloader.channel.ObjectChannel;
-import org.gnayils.downloader.channel.PeerChannel;
-import org.gnayils.downloader.channel.ServerChannel;
+import org.gnayils.channel.MulticastChannel;
+import org.gnayils.channel.ObjectChannel;
+import org.gnayils.channel.PeerChannel;
+import org.gnayils.channel.ServerChannel;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
@@ -22,7 +22,9 @@ public class MasterDownloader implements Runnable {
     private int port;
     private String multicastGroupIp;
     private int multicastPort;
-    private int slaveDemandCount;
+    private int waitSlaveTimeout;
+
+    private MasterDownloaderListener listener;
 
     private Map<String, ObjectChannel<PeerChannel>> slaveChannelMap = new HashMap<>();
 
@@ -45,15 +47,19 @@ public class MasterDownloader implements Runnable {
 
     private Logger logger = Logger.getLogger(this.getClass().getName());
 
-    public MasterDownloader(String ip, int port, String multicastGroupIp, int multicastPort, String downloadUrl, int slaveDemandCount) throws IOException {
+    public MasterDownloader(String ip, int port, String multicastGroupIp, int multicastPort, String downloadUrl, int waitSlaveTimeout) throws IOException {
         this.ip = ip;
         this.port = port;
         this.multicastGroupIp = multicastGroupIp;
         this.multicastPort = multicastPort;
         this.downloadUrl = new URL(downloadUrl);
-        this.slaveDemandCount = slaveDemandCount;
+        this.waitSlaveTimeout = waitSlaveTimeout;
         this.multicastObjectChannel = new ObjectChannel<>(new MulticastChannel(ip, multicastPort, multicastGroupIp));
         this.serverChannel =  new ServerChannel(ip, port);
+    }
+
+    public void setListener(MasterDownloaderListener listener) {
+        this.listener = listener;
     }
 
 
@@ -85,6 +91,8 @@ public class MasterDownloader implements Runnable {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             isRunning = false;
             cleanup();
@@ -92,6 +100,7 @@ public class MasterDownloader implements Runnable {
     }
 
     private void getContentLength() throws IOException {
+        if(listener != null) listener.onDownloadStart(downloadUrl);
         Proxy proxy = Utilities.getHttpProxy();
         HttpsURLConnection httpsURLConnection;
         if(proxy == null) {
@@ -104,6 +113,7 @@ public class MasterDownloader implements Runnable {
         httpsURLConnection.setReadTimeout(5000);
         if (httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
             downloadContentLength = httpsURLConnection.getContentLength();
+            if(listener != null) listener.onGetDownloadSize(downloadContentLength);
             httpsURLConnection.disconnect();
             downloadFile = new File(String.valueOf(Utilities.getQualifiedFileName(downloadUrl.getFile())));
             if(!downloadFile.exists()) downloadFile.createNewFile();
@@ -113,7 +123,8 @@ public class MasterDownloader implements Runnable {
         }
     }
 
-    private void hireSlaveDownloader() throws IOException, InterruptedException {
+    private void hireSlaveDownloader() throws Exception {
+        if(listener != null) listener.onHireSlaveDownloaderStart();
         serverChannel.bind();
         multicastObjectChannel.getChannel().joinGroup();
         TimerTask timerTask = new TimerTask() {
@@ -132,8 +143,9 @@ public class MasterDownloader implements Runnable {
                 }
             }
         };
-        logger.log(Level.INFO, "prepare hire {0} slave downloader via sending broadcast to the local network", slaveDemandCount);
+        logger.log(Level.INFO, "prepare hire slave downloader via sending broadcast to the local network, wait for {0} seconds", waitSlaveTimeout);
         timer.schedule(timerTask, 0, 1000);
+        long expiredTime = System.currentTimeMillis() + waitSlaveTimeout * 1000;
         do {
             PeerChannel peerChannel = serverChannel.accept();
             if(peerChannel != null) {
@@ -143,11 +155,13 @@ public class MasterDownloader implements Runnable {
             if(!isRunning || Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-        } while (slaveChannelMap.size() < slaveDemandCount);
-        logger.info("hire slave downloader finished");
+        } while (System.currentTimeMillis() < expiredTime);
+        logger.log(Level.INFO, "hire slave downloader finished with {0} slave downloader", slaveChannelMap.size());
         timerTask.cancel();
         timer.purge();
         multicastObjectChannel.getChannel().leaveGroup();
+        if(slaveChannelMap.isEmpty()) throw new Exception("no any slave downloader hired for download task");
+        if(listener != null) listener.onHireSlaveDownloaderDone(slaveChannelMap.size());
     }
 
     private void dispatchTask() throws IOException {
@@ -172,6 +186,7 @@ public class MasterDownloader implements Runnable {
     }
 
     private void receiveDataFromSlave() throws IOException, ClassNotFoundException {
+        if(listener != null) listener.onSlaveDownloadStart(downloadProgressMap);
         while(!downloadProgressMap.isEmpty() && !slaveChannelMap.isEmpty()) {
             Iterator<Map.Entry<String, ObjectChannel<PeerChannel>>> iterator = slaveChannelMap.entrySet().iterator();
             while (iterator.hasNext()) {
@@ -222,6 +237,7 @@ public class MasterDownloader implements Runnable {
             if (!isDownloadSuccessful) {
                 downloadFile.delete();
             }
+            if(listener != null) listener.onDownloadDone(isDownloadSuccessful, downloadFile);
         }
     }
 

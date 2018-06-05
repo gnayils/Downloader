@@ -1,6 +1,7 @@
 package org.gnayils;
 
 import javax.net.ssl.*;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
@@ -79,7 +80,13 @@ public class Utilities {
         //System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tF %1$tT] [%4$-7s] %5$s %n");
         Logger rootLogger = Logger.getLogger("");
         for(Handler handler : rootLogger.getHandlers()) rootLogger.removeHandler(handler);
-        ConsoleHandler handler = new ConsoleHandler();
+        StreamHandler handler = null;
+        try {
+            handler = new FileHandler("./downloader.log");
+        } catch (IOException e) {
+            e.printStackTrace();
+            handler = new ConsoleHandler();
+        }
         handler.setFormatter(new SimpleFormatter() {
 
             final String LINE_SEPARATOR = System.getProperty("line.separator");

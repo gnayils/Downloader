@@ -1,4 +1,4 @@
-package org.gnayils.downloader.channel;
+package org.gnayils.channel;
 
 import java.io.EOFException;
 import java.io.IOException;

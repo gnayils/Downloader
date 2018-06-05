@@ -2,10 +2,10 @@ package org.gnayils.downloader;
 
 import org.gnayils.Packet;
 import org.gnayils.Utilities;
-import org.gnayils.downloader.channel.ClientChannel;
-import org.gnayils.downloader.channel.MulticastChannel;
-import org.gnayils.downloader.channel.ObjectChannel;
-import org.gnayils.downloader.channel.ObjectChannel.ObjectReadResult;
+import org.gnayils.channel.ClientChannel;
+import org.gnayils.channel.MulticastChannel;
+import org.gnayils.channel.ObjectChannel;
+import org.gnayils.channel.ObjectChannel.ObjectReadResult;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
