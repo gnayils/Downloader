@@ -195,4 +195,11 @@ public class SlaveDownloader implements Runnable {
             logger.log(Level.INFO, "download task finished with {0}", errorOccurred ? "error" : "successful");
         }
     }
+
+    public static void main(String[] args) throws IOException {
+        Utilities.trustAllCertificates();
+
+        SlaveDownloader slave = new SlaveDownloader("10.189.132.32", "230.0.0.1", 8000);
+        slave.start();
+    }
 }

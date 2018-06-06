@@ -22,7 +22,7 @@ public class TerminalUI implements MasterDownloaderListener {
     @Override
     public void onGetDownloadSize(int downloadContentLength) {
         LoadingPrinter.stopCurrentPrint();
-        System.out.printf("\rget download file size：%dKb\n", downloadContentLength / 1024);
+        System.out.printf("\rget download file size：%dKB\n", downloadContentLength / 1024);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class TerminalUI implements MasterDownloaderListener {
                         speed = 0;
                     } else {
                         currentPosition = progressInfo[0];
-                        speed = (lastPosition - currentPosition) * 2;
+                        speed = (currentPosition - lastPosition) * 2;
                     }
 
                     float progressRatio = ((float) currentPosition - startPosition + 1) / totalLength;
@@ -73,11 +73,15 @@ public class TerminalUI implements MasterDownloaderListener {
                     String progressString = progressCharCount < 1 ? String.format(FORMAT_1, ' ') : String.format(FORMAT_2, String.format("%" + progressCharCount + "c", ' ').replace(' ', '='));
                     int progressPercent = (int) (progressRatio * 100);
 
-                    System.out.printf("%15s: [%s] %3d%% (%dKb/s)%n", entry.getKey(), progressString, progressPercent, speed);
+                    System.out.printf("%15s: [%s] %3d%% %4dKB/s%n", entry.getKey(), progressString, progressPercent, speed / 1024);
 
                     entry.getValue()[1] = currentPosition;
                 }
-                if(!downloadProgressMap.isEmpty()) {
+                if(downloadProgressMap.isEmpty()) {
+                    synchronized (TerminalUI.this) {
+                        TerminalUI.this.notifyAll();
+                    }
+                } else {
                     System.out.print("\u001b[" + downloadInfoMap.size() + "A");
                 }
             }
@@ -86,8 +90,19 @@ public class TerminalUI implements MasterDownloaderListener {
 
     @Override
     public void onDownloadDone(boolean isDownloadSuccessful, File downloadFile) {
+        if(isDownloadSuccessful) {
+            synchronized (this) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+        }
         timer.cancel();
-        System.out.println();
+        LoadingPrinter.teardown();
+        System.out.printf("%ndownload %s%s%n",
+                isDownloadSuccessful ? "successful" : "failed",
+                downloadFile == null ? "" : ": " + downloadFile.getAbsolutePath());
     }
 
     public static void main(String[] args)  {

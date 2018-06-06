@@ -12,6 +12,9 @@ public  class LoadingPrinter extends TimerTask {
     public void run() {
         if (index % 6 == 0) {
             System.out.print("\r");
+            for(int i=0; i<prefixDesc.length() + 6; i++)
+                System.out.print(" ");
+            System.out.print("\r");
             System.out.print(prefixDesc);
         }
         System.out.print(".");
@@ -32,5 +35,9 @@ public  class LoadingPrinter extends TimerTask {
         if(currentLoadingPrinter != null)
             currentLoadingPrinter.cancel();
         timer.purge();
+    }
+
+    public static void teardown() {
+        timer.cancel();
     }
 }

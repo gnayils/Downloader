@@ -109,8 +109,8 @@ public class MasterDownloader implements Runnable {
             httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection(proxy);
         }
         httpsURLConnection.setRequestMethod("GET");
-        httpsURLConnection.setConnectTimeout(5000);
-        httpsURLConnection.setReadTimeout(5000);
+        httpsURLConnection.setConnectTimeout(10000);
+        httpsURLConnection.setReadTimeout(10000);
         if (httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
             downloadContentLength = httpsURLConnection.getContentLength();
             if(listener != null) listener.onGetDownloadSize(downloadContentLength);
@@ -147,7 +147,7 @@ public class MasterDownloader implements Runnable {
         timer.schedule(timerTask, 0, 1000);
         long expiredTime = System.currentTimeMillis() + waitSlaveTimeout * 1000;
         do {
-            PeerChannel peerChannel = serverChannel.accept();
+            PeerChannel peerChannel = serverChannel.accept(1000);
             if(peerChannel != null) {
                 logger.log(Level.INFO, "hired one slave downloader, come from {0}", peerChannel.channel().getRemoteAddress().toString());
                 slaveChannelMap.put(peerChannel.channel().getRemoteAddress().toString(), new ObjectChannel<>(peerChannel));
@@ -237,8 +237,8 @@ public class MasterDownloader implements Runnable {
             if (!isDownloadSuccessful) {
                 downloadFile.delete();
             }
-            if(listener != null) listener.onDownloadDone(isDownloadSuccessful, downloadFile);
         }
+        if(listener != null) listener.onDownloadDone(isDownloadSuccessful, downloadFile);
     }
 
 }
