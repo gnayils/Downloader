@@ -9,8 +9,10 @@ import org.gnayils.channel.ServerChannel;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.logging.*;
 
@@ -28,7 +30,7 @@ public class MasterDownloader implements Runnable {
 
     private Map<String, ObjectChannel<PeerChannel>> slaveChannelMap = new HashMap<>();
 
-    private Timer timer = new Timer();
+    private Timer timer;
 
     private URL downloadUrl;
     private int downloadContentLength;
@@ -56,6 +58,7 @@ public class MasterDownloader implements Runnable {
         this.waitSlaveTimeout = waitSlaveTimeout;
         this.multicastObjectChannel = new ObjectChannel<>(new MulticastChannel(ip, multicastPort, multicastGroupIp));
         this.serverChannel =  new ServerChannel(ip, port);
+        this.timer = new Timer();
     }
 
     public void setListener(MasterDownloaderListener listener) {
@@ -102,24 +105,26 @@ public class MasterDownloader implements Runnable {
     private void getContentLength() throws IOException {
         if(listener != null) listener.onDownloadStart(downloadUrl);
         Proxy proxy = Utilities.getHttpProxy();
-        HttpsURLConnection httpsURLConnection;
+        HttpURLConnection httpURLConnection;
         if(proxy == null) {
-            httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection();
+            httpURLConnection = (HttpURLConnection) downloadUrl.openConnection();
         } else {
-            httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection(proxy);
+            httpURLConnection = (HttpURLConnection) downloadUrl.openConnection(proxy);
         }
-        httpsURLConnection.setRequestMethod("GET");
-        httpsURLConnection.setConnectTimeout(10000);
-        httpsURLConnection.setReadTimeout(10000);
-        if (httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
-            downloadContentLength = httpsURLConnection.getContentLength();
+        httpURLConnection.setRequestMethod("GET");
+        httpURLConnection.setConnectTimeout(10000);
+        httpURLConnection.setReadTimeout(10000);
+        if (httpURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
+            downloadContentLength = httpURLConnection.getContentLength();
             if(listener != null) listener.onGetDownloadSize(downloadContentLength);
-            httpsURLConnection.disconnect();
+            httpURLConnection.disconnect();
             downloadFile = new File(String.valueOf(Utilities.getQualifiedFileName(downloadUrl.getFile())));
             if(!downloadFile.exists()) downloadFile.createNewFile();
             randomAccessFile = new RandomAccessFile(downloadFile, "rwd");
             randomAccessFile.setLength(downloadContentLength);
             logger.log(Level.INFO, "master downloader started, begin to download {0}, the size is {1}", new Object[]{ downloadFile.getName(), downloadContentLength});
+        } else {
+            throw new IOException("get download file length failed, with response code: " + httpURLConnection.getResponseCode());
         }
     }
 
@@ -192,7 +197,7 @@ public class MasterDownloader implements Runnable {
             while (iterator.hasNext()) {
                 Map.Entry<String, ObjectChannel<PeerChannel>> entry = iterator.next();
                 ObjectChannel.ObjectReadResult result = entry.getValue().readObject(POLLING_TIMEOUT);
-                if(result == null) { continue; }
+                if(result == null)  continue;
                 Packet packet = (Packet) result.object;
                 int[] progress = downloadProgressMap.get(result.sourceAddress.toString());
                 if(packet.type == Packet.DOWNLOADED_DATA) {

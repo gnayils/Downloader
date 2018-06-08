@@ -59,10 +59,8 @@ public class SlaveDownloader implements Runnable {
         isRunning = true;
         try {
             while (isRunning && !Thread.currentThread().isInterrupted()) {
-                if(!waitMasterRequest()) {
-                    continue;
-                }
-                waitTaskDispatch();
+                if(!waitMasterRequest()) continue;
+                if(!waitTaskDispatch()) continue;
                 executeTask();
             }
         } catch (InterruptedException e) {
@@ -90,13 +88,9 @@ public class SlaveDownloader implements Runnable {
         logger.info("slave downloader start to wait for the master hire request");
         while(isRunning && !Thread.currentThread().isInterrupted()) {
             result = multicastObjectChannel.readObject(1000);
-            if(result == null) {
-                continue;
-            }
+            if(result == null) continue;
             packet = (Packet) result.object;
-            if (packet.type != Packet.CONNECT_MASTER) {
-                continue;
-            }
+            if (packet.type != Packet.CONNECT_MASTER) continue;
             break;
         }
         multicastObjectChannel.getChannel().leaveGroup();
@@ -111,24 +105,28 @@ public class SlaveDownloader implements Runnable {
             clientObjectChannel.getChannel().connect(2000);
             logger.log(Level.INFO, "established the data transfer connection to the master downloader {0}", result.sourceAddress.toString());
         } catch (IOException e) {//may be the master downloader has enough slave connected, thus, other connection request ignored.
+            e.printStackTrace();
             return false;
         }
         return true;
     }
 
-    private void waitTaskDispatch() throws IOException, ClassNotFoundException, InterruptedException {
+    private boolean waitTaskDispatch() throws ClassNotFoundException, InterruptedException {
         ObjectReadResult result;
         Packet packet = null;
-        while(isRunning && !Thread.currentThread().isInterrupted()) {
-            result = clientObjectChannel.readObject(1000);
-            if(result == null) {
-                continue;
+        try {
+            while (isRunning && !Thread.currentThread().isInterrupted()) {
+                result = clientObjectChannel.readObject(1000);
+                if (result == null) continue;
+                packet = (Packet) result.object;
+                if (packet.type != Packet.DOWNLOAD_PARAMS) {
+                    throw new IOException("wrong type for the first packet received from server");
+                }
+                break;
             }
-            packet = (Packet) result.object;
-            if (packet.type != Packet.DOWNLOAD_PARAMS) {
-                throw new IOException("wrong type for the first packet received from server");
-            }
-            break;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
         if(!isRunning || Thread.currentThread().isInterrupted()) {
             throw new InterruptedException();
@@ -139,29 +137,29 @@ public class SlaveDownloader implements Runnable {
         startDownloadPosition = Integer.valueOf(downloadRange[0]);
         endDownloadPosition = Integer.valueOf(downloadRange[1]);
         logger.log(Level.INFO, "received the download task: {0} [{1}~{2}]", new Object[]{url, startDownloadPosition, endDownloadPosition});
+        return true;
     }
 
     private void executeTask() throws InterruptedException {
         boolean errorOccurred = false;
-        HttpsURLConnection httpsURLConnection = null;
+        HttpURLConnection httpURLConnection = null;
         try {
             logger.info("start to execute the download task");
             URL downloadUrl = new URL(url);
             Proxy proxy = Utilities.getHttpProxy();
             if(proxy == null) {
-                httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection();
+                httpURLConnection = (HttpURLConnection) downloadUrl.openConnection();
             } else {
-                httpsURLConnection = (HttpsURLConnection) downloadUrl.openConnection(proxy);
+                httpURLConnection = (HttpURLConnection) downloadUrl.openConnection(proxy);
             }
-            httpsURLConnection.setRequestMethod("GET");
-            httpsURLConnection.setReadTimeout(5000);
-            httpsURLConnection.setConnectTimeout(5000);
-            httpsURLConnection.setRequestProperty("Range", String.format("bytes=%d-%d", startDownloadPosition, endDownloadPosition));
-            if (httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_PARTIAL) {
-                InputStream inputStream = httpsURLConnection.getInputStream();
+            httpURLConnection.setRequestMethod("GET");
+            httpURLConnection.setReadTimeout(10000);
+            httpURLConnection.setConnectTimeout(10000);
+            httpURLConnection.setRequestProperty("Range", String.format("bytes=%d-%d", startDownloadPosition, endDownloadPosition));
+            if (httpURLConnection.getResponseCode() == HttpsURLConnection.HTTP_PARTIAL) {
+                InputStream inputStream = httpURLConnection.getInputStream();
                 byte[] downloadBuffer = new byte[20480];
-                int readLength;
-                int totalReadLength = 0;
+                int readLength, totalReadLength = 0;
                 while ((readLength = inputStream.read(downloadBuffer)) != -1) {
                     byte[] downloadedData = new byte[readLength];
                     System.arraycopy(downloadBuffer, 0, downloadedData, 0, downloadedData.length);
@@ -182,8 +180,8 @@ public class SlaveDownloader implements Runnable {
             errorOccurred = true;
             throw e;
         }  finally {
-            if (httpsURLConnection != null) {
-                httpsURLConnection.disconnect();
+            if (httpURLConnection != null) {
+                httpURLConnection.disconnect();
             }
             try {
                 clientObjectChannel.writeObject(new Packet(errorOccurred ? Packet.DOWNLOAD_ERROR : Packet.DOWNLOAD_COMPLETED));
@@ -198,7 +196,6 @@ public class SlaveDownloader implements Runnable {
 
     public static void main(String[] args) throws IOException {
         Utilities.trustAllCertificates();
-
         SlaveDownloader slave = new SlaveDownloader("10.189.132.32", "230.0.0.1", 8000);
         slave.start();
     }

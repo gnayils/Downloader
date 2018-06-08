@@ -8,10 +8,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TerminalUI implements MasterDownloaderListener {
 
     private Timer timer = new Timer();
+
+    private Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Override
     public void onDownloadStart(URL downloadUrl) {
@@ -22,7 +26,7 @@ public class TerminalUI implements MasterDownloaderListener {
     @Override
     public void onGetDownloadSize(int downloadContentLength) {
         LoadingPrinter.stopCurrentPrint();
-        System.out.printf("\rget download file size：%dKB\n", downloadContentLength / 1024);
+        System.out.printf("\rget download file size: %dKB\n", downloadContentLength / 1024);
     }
 
     @Override
@@ -65,15 +69,15 @@ public class TerminalUI implements MasterDownloaderListener {
                         speed = 0;
                     } else {
                         currentPosition = progressInfo[0];
-                        speed = (currentPosition - lastPosition) * 2;
+                        speed = (currentPosition - lastPosition) * 2 / 1024;
                     }
 
-                    float progressRatio = ((float) currentPosition - startPosition + 1) / totalLength;
+                    float progressRatio = (currentPosition - startPosition + 1) / (float) totalLength;
                     int progressCharCount = (int) (progressRatio * MAX_PROGRESS_CHAR_COUNT);
                     String progressString = progressCharCount < 1 ? String.format(FORMAT_1, ' ') : String.format(FORMAT_2, String.format("%" + progressCharCount + "c", ' ').replace(' ', '='));
                     int progressPercent = (int) (progressRatio * 100);
 
-                    System.out.printf("%15s: [%s] %3d%% %4dKB/s%n", entry.getKey(), progressString, progressPercent, speed / 1024);
+                    System.out.printf("%15s: [%s] %3d%% %4dKB/s%n", entry.getKey(), progressString, progressPercent, speed);
 
                     entry.getValue()[1] = currentPosition;
                 }
@@ -102,7 +106,7 @@ public class TerminalUI implements MasterDownloaderListener {
         LoadingPrinter.teardown();
         System.out.printf("%ndownload %s%s%n",
                 isDownloadSuccessful ? "successful" : "failed",
-                downloadFile == null ? "" : ": " + downloadFile.getAbsolutePath());
+                !isDownloadSuccessful || downloadFile == null ? "" : ": " + downloadFile.getAbsolutePath());
     }
 
     public static void main(String[] args)  {
